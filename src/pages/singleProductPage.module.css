@@ -1,0 +1,11 @@
+.wrapper{
+    padding: 10px;
+}
+.imgWrapp{
+    display: flex;
+    justify-content: flex-start;
+
+}
+img{
+    margin-right: 15vw;
+}

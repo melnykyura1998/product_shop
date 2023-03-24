@@ -1,0 +1,16 @@
+.input{
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    width: 180px;
+}
+.img{
+    margin: 10px;
+    width: 200px;
+
+}
+.btn{
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}

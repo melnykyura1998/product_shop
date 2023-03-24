@@ -1,0 +1,31 @@
+.filter{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100px;
+
+
+}
+.img{
+  font-size: 30px;
+}
+.header{
+  display: flex;
+  justify-content: space-between;
+  width:100%;
+  align-items: center;
+  color: #d9cec8;
+}
+.sider{
+  overflow: auto;
+  height: 100vh;
+  padding: 5px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  color: #d9cec8;
+}
+.input{
+  width: 20vw;
+}
