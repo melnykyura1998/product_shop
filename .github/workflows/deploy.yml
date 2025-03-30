@@ -1,0 +1,71 @@
+name: Deploy frontend application
+run-name: Deploy frontend from "${{ inputs.version == '' && 'main' || format('tags/v{0}', inputs.version) }}" to "${{ inputs.environment }}" environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to release. For example, 1.0.0. Leave empty to deploy from main branch"
+        required: false
+      environment:
+        description: "The environment to deploy."
+        required: true
+        type: environment
+
+env:
+  branch: ${{ inputs.version == '' && 'main' || format('tags/v{0}', inputs.version) }}
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.set_vars.outputs.url }}
+      environment: ${{ steps.set_vars.outputs.environment }}
+
+    steps:
+      - name: Set variables
+        id: set_vars
+        run: |
+          if [[ "${{ inputs.environment }}" == "staging" ]]; then
+            echo url='${{ vars.STAG_SERVER_DOMAIN }}' >> $GITHUB_OUTPUT
+            echo environment='staging' >> $GITHUB_OUTPUT
+          fi
+          
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            echo url='${{ vars.PROD_SERVER_DOMAIN }}' >> $GITHUB_OUTPUT
+            echo environment='production' >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    runs-on: ubuntu-22.04
+    container:
+      image: node:18.16.0
+    needs: [ init ]
+    environment:
+      name: ${{ needs.init.outputs.environment }}
+      url: https://${{ needs.init.outputs.url }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Deploy application
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ needs.init.outputs.url }}
+          username: ubuntu
+          key: ${{ needs.init.outputs.environment == 'staging' && secrets.STAG_SERVER_SSH_KEY || secrets.PROD_SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            cd client
+            unlink package-lock.json
+            git fetch --all --tags
+            git checkout ${{ env.branch }}
+            git pull origin ${{ env.branch }} 
+            sudo fallocate -l 1G /swapfile
+            sudo chmod 600 /swapfile
+            sudo swapon /swapfile
+            npm install 
+            npm run build:${{ needs.init.outputs.environment }} 
+            cd ~ 
+            rm -f /deploy/* 
+            cp -R client/build/* deploy
+            sudo swapoff --all
